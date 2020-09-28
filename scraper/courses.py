@@ -8,15 +8,13 @@ import aiohttp
 import bs4
 from bs4 import Tag, NavigableString
 
+from scraper.data import Course
+
 logger = logging.getLogger(__name__)
 
 
 class WebpageChangedException(Exception):
     pass
-
-
-Subject = namedtuple('Subject', 'name code href')
-Course = namedtuple('Course', 'subject number name')
 
 
 def parse_coursesaz(html_text):
