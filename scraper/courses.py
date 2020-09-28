@@ -1,28 +1,18 @@
 import asyncio
-import json
 import logging
-import os
 import re
-import sys
 from collections import namedtuple
-from datetime import datetime, timedelta
-from json import JSONDecodeError
-from sys import path
-from typing import List, Iterator
+from typing import List
 
 import aiohttp
 import bs4
 from bs4 import Tag, NavigableString
 
-
-COURSES_CACHE_LOCATION = 'cache/courses.json'
-COURSE_CACHE_EXPIRY = timedelta(days=7)
 logger = logging.getLogger(__name__)
 
 
 class WebpageChangedException(Exception):
     pass
-
 
 
 Subject = namedtuple('Subject', 'name code href')
