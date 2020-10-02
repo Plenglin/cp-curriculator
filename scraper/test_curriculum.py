@@ -5,14 +5,14 @@ from scraper.curriculum import parse_program, parse_courselist
 
 
 def conc_laes_cgraph():
-    with open('resources/conc-laes-cgraph.html') as file:
+    with open('test_resources/conc-laes-cgraph.html') as file:
         text = file.read()
     soup = BeautifulSoup(text, features='html.parser')
     return soup.find('table', attrs={'class': 'sc_courselist'})
 
 
 def qs_minor():
-    with open('resources/queer-studies-minor.html') as file:
+    with open('test_resources/queer-studies-minor.html') as file:
         text = file.read()
     soup = BeautifulSoup(text, features='html.parser')
     return soup.find('table', attrs={'class': 'sc_courselist'})

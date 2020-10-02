@@ -7,7 +7,7 @@ from scraper.data import Course, Subject
 
 
 def test_parse_coursesaz():
-    with open('resources/coursesaz.html') as file:
+    with open('test_resources/coursesaz.html') as file:
         text = file.read()
 
     subjects = parse_coursesaz(text)
@@ -20,8 +20,8 @@ def test_parse_coursesaz():
 
 
 @pytest.mark.parametrize("pathname", [
-    'resources/wgs-catalog.html',
-    'resources/math-catalog.html',
+    'test_resources/wgs-catalog.html',
+    'test_resources/math-catalog.html',
 ])
 def test_parse_single_subject(pathname):
     with open(pathname) as file:
