@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 RawCourse = namedtuple('RawCourse', 'course')
 OrCourse = namedtuple('OrCourse', 'course')
-SelectFromTheFollowing = namedtuple('SelectFromTheFollowing', 'units courses')
+SelectFromTheFollowing = namedtuple('SelectFromTheFollowing', 'units')
 AreaHeader = namedtuple('AreaHeader', 'text')
 Comment = namedtuple('Comment', 'comment')
 TotalUnits = namedtuple('TotalUnits', 'units')
@@ -57,7 +57,11 @@ def lex_courselist(tag: Tag):
             else:
                 courselistcomment = row.findChild('span', {'class': 'courselistcomment'})
                 if courselistcomment:
-                    yield SelectFromTheFollowing(3, [])
+                    if 'select from the following:' in courselistcomment.contents[0].lower():
+                        units = row.findChild('td', {'class': 'hourscol'}).contents[0]
+                        yield SelectFromTheFollowing(int(units))
+                    else:
+                        yield Comment(courselistcomment.contents[0])
                 else:
                     yield RawCourse(read_course(row))
     except StopIteration:
