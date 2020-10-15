@@ -1,14 +1,13 @@
 import asyncio
 import logging
 import re
-from collections import namedtuple
 from typing import List
 
 import aiohttp
 import bs4
 from bs4 import Tag, NavigableString
 
-from scraper.data import Course
+from scraper.data import Course, Subject
 
 logger = logging.getLogger(__name__)
 

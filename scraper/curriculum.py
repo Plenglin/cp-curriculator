@@ -12,14 +12,22 @@ from scraper.data import Subject
 logger = logging.getLogger(__name__)
 
 
+RawCourse = namedtuple('RawCourse', 'course')
+OrCourse = namedtuple('OrCourse', 'course')
+SelectFromTheFollowing = namedtuple('SelectFromTheFollowing', 'units courses')
+AreaHeader = namedtuple('AreaHeader', 'text')
+Comment = namedtuple('Comment', 'comment')
+TotalUnits = namedtuple('TotalUnits', 'units')
+Token = Union[RawCourse, OrCourse, SelectFromTheFollowing, AreaHeader, Comment, TotalUnits]
+
+
 class InvalidCourseException(Exception):
     pass
 
 
 def read_course(row: Tag):
     try:
-        codecol = row.find('td')
-        a = codecol.find('a')
+        a = row.findChild('a')
         js = a.attrs.get('onclick')
         match = re.match(r'return showCourse\(this, \'(.*)\'\);', js)
         return match.group(1)
@@ -27,24 +35,33 @@ def read_course(row: Tag):
         raise InvalidCourseException()
 
 
-def parse_courselist(tag: Tag):
+def lex_courselist(tag: Tag):
     rch = list(tag.find('tbody').children)
     rows = iter(rch)
-    reqs = []
     try:
         while True:
             row = next(rows)
             if isinstance(row, NavigableString):
                 continue
             row: Tag
-            classes = row.attrs.get('class')
+            css_classes = row.attrs.get('class')
 
-            if 'listsum' in classes or 'areaheader' in classes:
-                continue
-
-            reqs.append(read_course(row))
+            if 'listsum' in css_classes:
+                hourscol = row.findChild('td', {'class': 'hourscol'})
+                yield TotalUnits(int(hourscol.contents[0]))
+            elif 'areaheader' in css_classes:
+                span = row.findChild('span')
+                yield AreaHeader(span.contents[0])
+            elif 'orclass' in css_classes:
+                yield OrCourse(read_course(row))
+            else:
+                courselistcomment = row.findChild('span', {'class': 'courselistcomment'})
+                if courselistcomment:
+                    yield SelectFromTheFollowing(3, [])
+                else:
+                    yield RawCourse(read_course(row))
     except StopIteration:
-        return reqs
+        return
 
 
 def parse_program(html_text):
