@@ -23,8 +23,9 @@ jobs:
           pip install -r ./scraper/requirements.txt
   
       - name: Test
-        run: pytest ./scraper
-      
+        run: pytest .
+        working-directory: ./scraper
+
       - name: Run scrape
         run: python main.py
         working-directory: ./scraper

@@ -7,9 +7,12 @@ from scraper.curriculum import RawCourse, TotalUnits, AreaHeader, OrCourse, Sele
     Comment, IndentCourse
 
 
+def resolve_test_resource(path):
+    return os.path.realpath(__file__ + '/../' + path)
+
+
 def get_courselist(path) -> List[Tag]:
-    path = os.path.realpath(__file__ + '/../' + path)
-    with open(path) as file:
+    with open(resolve_test_resource(path)) as file:
         text = file.read()
     soup = BeautifulSoup(text, features='html.parser')
     return soup.findAll('table', attrs={'class': 'sc_courselist'})

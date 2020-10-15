@@ -1,7 +1,7 @@
 import pytest
 
-from curriculum import lex_courselist
-from test_resources import *
+from .curriculum import lex_courselist
+from .test_resources import *
 
 
 @pytest.mark.parametrize('tag,tokens', [

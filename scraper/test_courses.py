@@ -2,12 +2,13 @@ from unittest import TestCase
 
 import pytest
 
-from scraper.courses import parse_coursesaz, parse_single_subject
-from scraper.data import Course, Subject
+from .courses import parse_coursesaz, parse_single_subject
+from .data import Course, Subject
+from .test_resources import resolve_test_resource
 
 
 def test_parse_coursesaz():
-    with open('test_resources/coursesaz.html') as file:
+    with open(resolve_test_resource('coursesaz.html')) as file:
         text = file.read()
 
     subjects = parse_coursesaz(text)
@@ -20,11 +21,11 @@ def test_parse_coursesaz():
 
 
 @pytest.mark.parametrize("pathname", [
-    'test_resources/wgs-catalog.html',
-    'test_resources/math-catalog.html',
+    'wgs-catalog.html',
+    'math-catalog.html',
 ])
 def test_parse_single_subject(pathname):
-    with open(pathname) as file:
+    with open(resolve_test_resource(pathname)) as file:
         text = file.read()
 
     courses = parse_single_subject(text)
