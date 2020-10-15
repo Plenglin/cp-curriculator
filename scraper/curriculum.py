@@ -37,36 +37,34 @@ def read_course(row: Tag):
 
 def lex_courselist(tag: Tag):
     rch = list(tag.find('tbody').children)
-    rows = iter(rch)
-    try:
-        while True:
-            row = next(rows)
-            if isinstance(row, NavigableString):
-                continue
-            row: Tag
-            css_classes = row.attrs.get('class')
+    for row in rch:
+        if isinstance(row, NavigableString):
+            continue
+        row: Tag
+        css_classes = row.attrs.get('class')
 
-            if 'listsum' in css_classes:
-                hourscol = row.findChild('td', {'class': 'hourscol'})
-                yield TotalUnits(int(hourscol.contents[0]))
-            elif 'areaheader' in css_classes:
-                span = row.findChild('span')
-                yield AreaHeader(span.contents[0])
-            elif 'orclass' in css_classes:
-                yield OrCourse(read_course(row))
-            else:
-                courselistcomment = row.findChild('span', {'class': 'courselistcomment'})
-                if courselistcomment:
-                    if 'select from the following:' in courselistcomment.contents[0].lower():
-                        units = row.findChild('td', {'class': 'hourscol'}).contents[0]
-                        yield SelectFromTheFollowing(int(units))
-                    else:
-                        yield Comment(courselistcomment.contents[0])
+        if 'listsum' in css_classes:
+            hourscol = row.findChild('td', {'class': 'hourscol'})
+            yield TotalUnits(int(hourscol.contents[0]))
+        elif 'areaheader' in css_classes:
+            span = row.findChild('span')
+            yield AreaHeader(span.contents[0])
+        elif 'orclass' in css_classes:
+            yield OrCourse(read_course(row))
+        else:
+            courselistcomment = row.findChild('span', {'class': 'courselistcomment'})
+            if courselistcomment:
+                if 'select from the following:' in courselistcomment.contents[0].lower():
+                    units = row.findChild('td', {'class': 'hourscol'}).contents[0]
+                    yield SelectFromTheFollowing(int(units))
                 else:
-                    yield RawCourse(read_course(row))
-    except StopIteration:
-        return
+                    yield Comment(courselistcomment.contents[0])
+            else:
+                yield RawCourse(read_course(row))
 
+
+def parse_courselist(tokens):
+    pass
 
 def parse_program(html_text):
     soup = BeautifulSoup(html_text, features='html.parser')
