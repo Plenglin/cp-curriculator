@@ -2,7 +2,7 @@ import asyncio
 import logging
 import re
 from collections import namedtuple
-from typing import List, Union
+from typing import List, Union, Generator, Iterable
 
 import aiohttp
 from bs4 import Tag, NavigableString, BeautifulSoup
@@ -10,7 +10,6 @@ from bs4 import Tag, NavigableString, BeautifulSoup
 from scraper.data import Subject
 
 logger = logging.getLogger(__name__)
-
 
 RawCourse = namedtuple('RawCourse', 'course')
 OrCourse = namedtuple('OrCourse', 'course')
@@ -36,7 +35,7 @@ def read_course(row: Tag):
         raise InvalidCourseException()
 
 
-def lex_courselist(tag: Tag):
+def lex_courselist(tag: Tag) -> Generator[Token]:
     rch = list(tag.find('tbody').children)
     for row in rch:
         if isinstance(row, NavigableString):
@@ -67,55 +66,48 @@ def lex_courselist(tag: Tag):
                     yield RawCourse(read_course(row))
 
 
-OrRequirement = namedtuple('Requirement', 'units courses')
+Mono = namedtuple('Mono', 'course')
+Or = namedtuple('Or', 'requirements')
+And = namedtuple('And', 'requirements')
+SFTF = namedtuple('SFTF', 'units requirements')
+Requirement = Union[Mono, Or, And, SFTF]
+
+# Pseudotoken
+IndentedSFTFToken = namedtuple('IndentedSFTFToken', 'sftf')
 
 
-class CourseListParser:
-    def __init__(self, tokens: List[Token]):
-        self.i = 0
-        self.tokens = tokens
+def parse_courselist(tokens: Iterable[Token]) -> Requirement:
+    stack = []
+    root = []
+    for token in tokens:
+        if isinstance(token, Comment):
+            continue
 
-    def read(self):
-        out = self.tokens[self.i]
-        self.i += 1
-        return out
-
-    def peek(self):
-        if self.i < len(self.tokens):
-            return self.tokens[self.i]
-        return None
-
-    def read_raw_course(self, head: RawCourse):
-        group = [head.course]
-        while isinstance(self.peek(), OrCourse):
-            group.append(self.read().course)
-        return OrRequirement(4 * len(group), group)
-
-    def read_courses_run(self):
-        out = []
-        while self.peek():
-            token = self.read()
-            if isinstance(token, RawCourse):
-                out.append(self.read_raw_course(token))
-            elif isinstance(token, SelectFromTheFollowing):
+        # End of IndentCourse chain
+        if isinstance(stack[-1], OrCourse) and not isinstance(token, OrCourse):
+            group = []
+            while isinstance(stack[-1], IndentCourse):
                 pass
 
+        # End of OrCourse chain
+        if isinstance(stack[-1], OrCourse) and not isinstance(token, OrCourse):
+            group = []
+            while isinstance(stack[-1], OrCourse):
+                group.append(stack.pop())
+            group.append(stack.pop())  # Pop the heading RawCourse
+            group.reverse()
+            root.append(OrCourse(group))
 
-    def read_select_from_the_following(self, sftf: SelectFromTheFollowing):
-        group = [head.course]
-        while isinstance(self.peek(), OrCourse):
-            group.append(self.read().course)
-        return OrRequirement(4 * len(group), group)
-
-
-    def read_courselist(self):
-        out = []
-        while self.peek():
-            token = self.read()
-            if isinstance(token, RawCourse):
-                out.append(self.read_raw_course(token))
-            elif isinstance(token, SelectFromTheFollowing):
-                token.units
+        if isinstance(token, IndentCourse):
+            stack.append(token)
+        elif isinstance(token, RawCourse):
+            if isinstance(stack[-1], RawCourse):
+                yield stack.pop()
+                stack.append(token)
+        elif isinstance(token, OrCourse):
+            stack.append(token)
+        elif isinstance(token, SelectFromTheFollowing):
+            stack.append(token)
 
 
 def parse_program(html_text):

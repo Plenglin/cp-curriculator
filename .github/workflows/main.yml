@@ -31,11 +31,46 @@ jobs:
         working-directory: ./scraper
       
       - name: Zip scraped data
-        run: zip scraped-data.zip -r out/
+        run: zip curriculum-data.zip -r data/
         working-directory: ./scraper
         
       - name: Upload scraped data
         uses: actions/upload-artifact@v2.2.0
         with: 
-          name: Scraped Data
-          path: ./scraper/scraped-data.zip
+          name: curriculum-data
+          path: ./scraper/curriculum-data.zip
+
+  deploy_frontend:
+    runs-on: ubuntu-latest
+    depends-on:
+      - scrape
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Download scraped data
+        uses: actions/download-artifact@v2
+        with:
+          name: curriculum-data
+          path: ./frontend
+
+      - name: Unzip scraped data
+        run: unzip curriculum-data.zip
+        working-directory: ./frontend
+
+      - name: Install dependencies
+        run: yarn install
+        working-directory: ./frontend
+
+      - name: Run the tests
+        run: npm test
+        working-directory: ./frontend
+
+      - name: Build
+        run: npm run build
+        working-directory: ./frontend
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          publish_dir: ./frontend/build
